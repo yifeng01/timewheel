@@ -1,9 +1,15 @@
 # timewheel
 golang implement for time wheel.
+Now Support:
+1. scheduler task
+2. once delay task
+3. multi delay task
+4. run immediate task
 
+# install
+go get github.com/yifeng01/timewheel
 
-
-## example
+# useage
 
 ```
 package main
