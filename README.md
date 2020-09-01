@@ -1,5 +1,5 @@
 # timewheel
-golang implement for time wheel.
+golang implement for time wheel. Refer github.com/nosixtools/timewheel
 Now Support:
 1. scheduler task
 2. once delay task
