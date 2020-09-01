@@ -26,8 +26,8 @@ type Job func(interface{})
 
 // Scheduler determines the execution plan of a task.
 type Scheduler interface {
-	// Next returns the next execution time after the given (previous) time.
-	// It will return a zero time.Duration if no next time is scheduled.
+	// Next returns the next execution duration.
+	// It will return a zero time.Duration if no next duration is scheduled.
 	Next() time.Duration
 }
 
@@ -90,7 +90,7 @@ func (tw *TimeWheel) start() {
 	}
 }
 
-//RunTask immediately run new task to time wheel
+// RunTask immediately run new task to time wheel
 func (tw *TimeWheel) RunTask(data interface{}, job Job) error {
 	if job == nil {
 		return errors.New("illegal task params")
@@ -101,7 +101,7 @@ func (tw *TimeWheel) RunTask(data interface{}, job Job) error {
 	return nil
 }
 
-//SchedulerTask scheduler new task to time wheel
+// SchedulerTask scheduler new task to time wheel
 func (tw *TimeWheel) SchedulerTask(s Scheduler, key, data interface{}, job Job) error {
 	if s == nil || key == nil || job == nil {
 		return errors.New("illegal task params")
