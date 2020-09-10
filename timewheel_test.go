@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"testing"
 	"time"
-
-	"github.com/yifeng01/timewheel"
 )
 
 func TestTimeWheel_AddTask(t *testing.T) {
-	tw := timewheel.New(time.Second, 3600)
+	tw := New(time.Second, 3600)
 	tw.Start()
 	defer tw.Stop()
 
@@ -65,7 +63,7 @@ func TestTimeWheel_SchedulerTask(t *testing.T) {
 			30 * time.Second,
 		}}
 
-	tw := timewheel.New(time.Second, 3600)
+	tw := New(time.Second, 3600)
 	tw.Start()
 	defer tw.Stop()
 
@@ -90,7 +88,7 @@ func TestTimeWheel_SchedulerTask(t *testing.T) {
 }
 
 func TestTimeWheel_RunTask(t *testing.T) {
-	tw := timewheel.New(time.Millisecond, 3000)
+	tw := New(time.Millisecond, 3000)
 	tw.Start()
 	defer tw.Stop()
 
