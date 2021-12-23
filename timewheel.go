@@ -37,6 +37,7 @@ type task struct {
 	interval time.Duration
 	times    int //-1:no limit >=1:run times
 	circle   int
+	pos      int
 	key      interface{}
 	data     interface{}
 	job      Job
@@ -107,12 +108,13 @@ func (tw *TimeWheel) SchedulerTask(s Scheduler, key, data interface{}, job Job) 
 		return errors.New("illegal task params")
 	}
 
-	_, ok := tw.taskRecord.Load(key)
-	if ok {
+	taskData := &task{s: s, times: -1, key: key, data: data, job: job}
+	_, loaded := tw.taskRecord.LoadOrStore(key, taskData)
+	if loaded {
 		return fmt.Errorf("duplicate task key=%v", key)
 	}
 
-	tw.addTaskChannel <- &task{s: s, times: -1, key: key, data: data, job: job}
+	tw.addTaskChannel <- taskData
 
 	return nil
 }
@@ -123,12 +125,13 @@ func (tw *TimeWheel) AddTask(interval time.Duration, times int, key, data interf
 		return errors.New("illegal task params")
 	}
 
-	_, ok := tw.taskRecord.Load(key)
-	if ok {
+	taskData := &task{interval: interval, times: times, key: key, data: data, job: job}
+	_, loaded := tw.taskRecord.LoadOrStore(key, taskData)
+	if loaded {
 		return fmt.Errorf("duplicate task key=%v", key)
 	}
 
-	tw.addTaskChannel <- &task{interval: interval, times: times, key: key, data: data, job: job}
+	tw.addTaskChannel <- taskData
 	return nil
 }
 
@@ -138,15 +141,13 @@ func (tw *TimeWheel) RemoveTask(key interface{}) error {
 		return nil
 	}
 
-	value, ok := tw.taskRecord.Load(key)
-
-	if !ok {
+	value, loaded := tw.taskRecord.LoadAndDelete(key)
+	if !loaded {
 		return fmt.Errorf("task not exists, please check you task key=%v", key)
 	} else {
 		// lazy remove task
 		task := value.(*task)
 		task.times = 0
-		tw.taskRecord.Delete(task.key)
 	}
 	return nil
 }
@@ -158,11 +159,14 @@ func (tw *TimeWheel) UpdateTask(key interface{}, interval time.Duration, data in
 	}
 
 	value, ok := tw.taskRecord.Load(key)
-
 	if !ok {
 		return fmt.Errorf("task not exists, please check you task key=%v", key)
 	}
+
 	task := value.(*task)
+	if task.times <= 1 {
+		return fmt.Errorf("task only trigger once, cannot update task key=%v", key)
+	}
 	task.data = data
 	task.interval = interval
 	return nil
@@ -202,11 +206,9 @@ func (tw *TimeWheel) addTask(task *task) {
 
 	pos, circle := tw.getPositionAndCircle(task.interval)
 	task.circle = circle
+	task.pos = pos
 
 	tw.slots[pos].PushBack(task)
-
-	//record the task
-	tw.taskRecord.Store(task.key, task)
 }
 
 // scan task list and run the task
@@ -222,7 +224,6 @@ func (tw *TimeWheel) scanAddRunTask(l *list.List) {
 		if task.times == 0 {
 			next := item.Next()
 			l.Remove(item)
-			tw.taskRecord.Delete(task.key)
 			item = next
 			continue
 		}
