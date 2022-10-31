@@ -172,6 +172,12 @@ func (tw *TimeWheel) UpdateTask(key interface{}, interval time.Duration, data in
 	return nil
 }
 
+// judge task already in time wheel
+func (tw *TimeWheel) IsTaskExist(key interface{}) bool {
+	_, ok := tw.taskRecord.Load(key)
+	return ok
+}
+
 // time wheel initialize
 func (tw *TimeWheel) init() {
 	for i := 0; i < tw.slotNum; i++ {
@@ -179,7 +185,6 @@ func (tw *TimeWheel) init() {
 	}
 }
 
-//
 func (tw *TimeWheel) tickHandler() {
 	l := tw.slots[tw.currentPos]
 	tw.scanAddRunTask(l)
